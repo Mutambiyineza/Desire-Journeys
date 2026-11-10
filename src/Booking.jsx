@@ -1,7 +1,6 @@
 import {useState} from 'react';
 import {J,money} from './data.js';
 import Art from './Art.jsx';
-const BOOKINGS_EMAIL='mutadisi2@gmail.com'; // booking requests are addressed here
 const WHATSAPP='250789806163';
 const STEPS=['Journey','Date & travelers','Your details','Preferences','Review'];
 const DEF={j:'gorilla',date:'',adults:2,kids:0,name:'',email:'',phone:'',country:'',wa:'',stay:'Mid-range',trans:'Private vehicle',budget:'Flexible',extra:'',diet:'',req:''};
@@ -9,6 +8,7 @@ const Sel=({id,label,v,set,opts})=>(<div><label htmlFor={id}>{label}</label><sel
 export default function Booking({init,id}){
   const [B,setB]=useState({...DEF,...init,j:id||init.j||DEF.j});
   const [step,setStep]=useState(1);const [err,setErr]=useState('');const [ref,setRef]=useState('');
+  const [sending,setSending]=useState(false);const [sentTo,setSentTo]=useState('');
   const set=k=>v=>setB(b=>({...b,[k]:v}));
   const j=J.find(x=>x.id===B.j)||J[0];
   const price=money(j.price*(B.adults+B.kids*.5));
@@ -22,17 +22,58 @@ export default function Booking({init,id}){
     if(!B.country.trim()) return 'Enter your country.';
     return '';
   }
-  function next(){const e=check();setErr(e);if(e)return;if(step<5)setStep(step+1);else setRef('DJ-'+Date.now().toString(36).toUpperCase().slice(-6));scrollTo(0,0)}
+  async function sendBooking(){
+    setSending(true);setErr('');
+    try{
+      const response=await fetch('/api/bookings',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          journeyId:B.j,
+          date:B.date,
+          adults:B.adults,
+          children:B.kids,
+          name:B.name,
+          email:B.email,
+          phone:B.phone,
+          whatsapp:B.wa,
+          country:B.country,
+          stay:B.stay,
+          transport:B.trans,
+          budget:B.budget,
+          activities:B.extra,
+          dietary:B.diet,
+          requests:B.req
+        })
+      });
+      let result;
+      try{
+        result=await response.json();
+      }catch{
+        throw new Error('The booking service returned an invalid response. Please try again.');
+      }
+      if(!response.ok) throw new Error(result.error||'We could not send your booking. Please try again.');
+      if(!result.reference||!result.sentTo) throw new Error('The booking service returned an invalid response. Please try again.');
+      setRef(result.reference);setSentTo(result.sentTo);scrollTo(0,0);
+    }catch(error){
+      setErr(error instanceof Error?error.message:'We could not send your booking. Please try again.');
+    }finally{
+      setSending(false);
+    }
+  }
+  function next(){
+    const e=check();setErr(e);if(e)return;
+    if(step<5){setStep(step+1);return}
+    void sendBooking();
+  }
   if(ref){
-    const body=['BOOKING REQUEST '+ref,'','Journey: '+j.name,'Destination: '+j.dest,'Duration: '+j.dur,'Travel date: '+(B.date||'Flexible'),'Adults: '+B.adults,'Children: '+B.kids,'Estimated price: '+price,'','Name: '+B.name,'Email: '+B.email,'Phone: '+B.phone,'WhatsApp: '+(B.wa||B.phone),'Country: '+B.country,'','Accommodation: '+B.stay,'Transport: '+B.trans,'Budget: '+B.budget,'Activities: '+(B.extra||'-'),'Dietary: '+(B.diet||'-'),'Special requests: '+(B.req||'-')].join('\n');
-    const mail=`mailto:${BOOKINGS_EMAIL}?subject=${encodeURIComponent(`Booking request ${ref}: ${j.name}`)}&body=${encodeURIComponent(body)}`;
     return(<div className="bk" style={{textAlign:'center'}}><h1 style={{fontSize:'clamp(2.2rem,6vw,3.6rem)'}}>Your Journey Starts Here.</h1>
-      <p className="lead" style={{margin:'14px auto'}}>Thank you! Your booking request is ready. Press Send by email so it reaches the Desire Journeys team, who will then contact you shortly to confirm availability and finalize your trip.</p>
+      <p className="lead" style={{margin:'14px auto'}}>Thank you! Your booking request has been sent to {sentTo}. The Desire Journeys team will contact you shortly to confirm availability and finalize your trip.</p>
       <div className="ref">{ref}</div>
       <div className="panel sum" style={{textAlign:'left'}}><div><span className="meta">Journey</span><b>{j.name}</b></div><div><span className="meta">Travel date</span><b>{B.date||'Flexible'}</b></div><div><span className="meta">Contact</span><b>{B.email} · {B.phone}</b></div></div>
-      <div className="ctas" style={{justifyContent:'center',marginTop:24}}><a className="btn btn-gold" href={mail}>Send by email</a><a className="btn btn-dark" href="#journeys">Back to Journeys</a>
+      <div className="ctas" style={{justifyContent:'center',marginTop:24}}><a className="btn btn-dark" href="#journeys">Back to Journeys</a>
         <a className="btn btn-line" href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent('Hello, my booking reference is '+ref)}`}>Contact Us on WhatsApp</a></div>
-      <p className="meta" style={{marginTop:16}}>Send by email opens your email app with all your details filled in. Press send there to finish.</p></div>);
+      </div>);
   }
   return(<div className="bk"><h1 style={{fontSize:'clamp(2rem,5vw,3rem)'}}>Book a Journey</h1>
     <div className="prog" aria-label={`Step ${step} of 5`}>{STEPS.map((l,i)=><span key={l} className={i<step?'on':''} title={l}/>)}</div>
@@ -56,6 +97,6 @@ export default function Booking({init,id}){
         {[['Journey',j.name],['Destination',j.dest],['Travel date',B.date||'Flexible'],['Travelers',`${B.adults} adult${B.adults>1?'s':''}${B.kids?`, ${B.kids} child${B.kids>1?'ren':''}`:''}`],['Options',`${B.stay} stay, ${B.trans}, budget: ${B.budget}`],['Estimated price',`${price} (estimate; final quote confirmed by our team)`]].map(r=><div key={r[0]}><span className="meta">{r[0]}</span><b style={{textAlign:'right'}}>{r[1]}</b></div>)}</div></>}
       {err&&<p className="err" role="alert">{err}</p>}
       <div className="row">{step>1?<button className="btn btn-line" onClick={()=>{setErr('');setStep(step-1)}}>Back</button>:<span/>}
-        <button className={`btn ${step===5?'btn-gold':'btn-dark'}`} onClick={next}>{step===5?'Submit Booking Request':'Continue'}</button></div>
+        <button className={`btn ${step===5?'btn-gold':'btn-dark'}`} onClick={next} disabled={sending}>{sending?'Sending…':step===5?'Send Booking Request':'Continue'}</button></div>
     </div></div>);
 }
