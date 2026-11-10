@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {J,D,C,money,TAG} from './data.js';
+import {J,D,C,money,TAG,destinationId} from './data.js';
 import Art from './Art.jsx';
 import {Pin,Cal,Usr} from './icons.jsx';
 const WHY=[['🧭','Local Expertise','Experience Rwanda with people who know it best.'],['🎯','Personalized Journeys','Your journey should reflect your interests, pace and style.'],['🌿','Authentic Experiences','Go beyond the usual tourist experience.'],['🤝','Trusted Service','From planning to your return home, we’re with you every step of the way.'],['🧳','Flexible Travel','Choose a curated journey or create something completely your own.']];
@@ -30,7 +30,7 @@ export default function Home({onSearch}){
     <p className="meta" style={{marginTop:20,textAlign:'center'}}>Prices are placeholders. Journeys live in src/data.js, ready to be replaced by a CMS or API.</p></div></section>
 
   <section id="destinations" className="alt"><div className="wrap"><div className="st"><h2>One Country. Countless Journeys.</h2><p className="lead">A small country with volcanoes, savanna, rainforest and lakes, all within a day’s drive of Kigali.</p></div>
-    <div className="explore">{D.map(d=><div className="dest" key={d[0]}><Art k={d[2]}/><div className="t"><h3>{d[0]}</h3><p>{d[1]}</p></div></div>)}</div></div></section>
+    <div className="explore">{D.map(d=><div className="dest" id={destinationId(d[0])} key={d[0]}><Art k={d[2]}/><div className="t"><h3>{d[0]}</h3><p>{d[1]}</p></div></div>)}</div></div></section>
 
   <section><div className="wrap"><div className="st"><h2>Choose Your Experience</h2></div>
     <div className="cats">{C.map(c=><div className="cat" key={c[1]}><i aria-hidden="true">{c[0]}</i>{c[1]}</div>)}</div></div></section>
