@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useEffect,useState} from 'react';
 import {J,D,C,money,TAG,destinationId} from './data.js';
 import Art from './Art.jsx';
 import {Pin,Cal,Usr} from './icons.jsx';
@@ -13,9 +13,26 @@ export function JourneyCard({j}){
 export default function Home({onSearch}){
   const [q,setQ]=useState({j:'',date:'',n:2});
   const [msg,setMsg]=useState('');
+  const [slideIndex,setSlideIndex]=useState(1);
+  const [playing,setPlaying]=useState(true);
+  const slides=D.map(([name,,k])=>({name,k}));
   const up=(k,v)=>setQ(s=>({...s,[k]:v}));
+  useEffect(()=>{
+    if(!playing) return;
+    const timer=setInterval(()=>setSlideIndex(i=>(i+1)%slides.length),6000);
+    return()=>clearInterval(timer);
+  },[playing,slides.length]);
   return(<>
-  <section className="hero" id="home"><div className="himg"><Art k="volcano"/></div>
+  <section className="hero" id="home">
+    <div className="himg" aria-hidden="true">{slides.map((slide,i)=><div className={`hero-slide${i===slideIndex?' active':''}`} key={slide.k}><Art k={slide.k}/></div>)}</div>
+    <div className="hero-slider" role="group" aria-label="Destination photo slideshow">
+      <span className="hero-slide-name" aria-live="off">{slides[slideIndex].name}</span>
+      <button type="button" onClick={()=>setSlideIndex(i=>(i-1+slides.length)%slides.length)} aria-label="Previous destination photo">‹</button>
+      <button type="button" onClick={()=>setPlaying(p=>!p)} aria-label={playing?'Pause slideshow':'Play slideshow'}>{playing?'Pause':'Play'}</button>
+      <button type="button" onClick={()=>setSlideIndex(i=>(i+1)%slides.length)} aria-label="Next destination photo">›</button>
+      <span className="hero-slide-count" aria-hidden="true">{slideIndex+1} / {slides.length}</span>
+      <div className="hero-slide-dots">{slides.map((slide,i)=><button type="button" key={slide.k} className={i===slideIndex?'active':''} onClick={()=>setSlideIndex(i)} aria-label={`Show ${slide.name} photo`} aria-pressed={i===slideIndex}/>)}</div>
+    </div>
     <div className="wrap hc"><span className="chip"><i/>Now booking journeys for 2027</span><h1>Your Desire. Our Journey.</h1>
       <p className="sub">Explore Rwanda through unforgettable journeys, authentic experiences, and adventures designed around you.</p>
       <div className="ctas"><a className="btn btn-gold" href="#journeys">Explore Journeys</a><a className="btn btn-glass" href="#book">Plan Your Trip</a></div>
