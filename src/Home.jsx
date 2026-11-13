@@ -5,10 +5,11 @@ import {Pin,Cal,Usr} from './icons.jsx';
 const WHY=[['🧭','Local Expertise','Experience Rwanda with people who know it best.'],['🎯','Personalized Journeys','Your journey should reflect your interests, pace and style.'],['🌿','Authentic Experiences','Go beyond the usual tourist experience.'],['🤝','Trusted Service','From planning to your return home, we’re with you every step of the way.'],['🧳','Flexible Travel','Choose a curated journey or create something completely your own.']];
 const STEPS=[['Explore','Discover destinations and experiences.'],['Choose','Find a journey that matches your interests.'],['Customize','Tell us how you’d like your trip to look.'],['Journey','We handle the details while you enjoy Rwanda.']];
 export function JourneyCard({j}){
-  return(<article className="card"><div className="img"><Art k={j.k}/><span className="pb pl">{j.dur}</span><span className="pb pr">{TAG[j.id]}</span></div>
-    <div className="body"><h3>{j.name}</h3><div className="loc"><Pin/>{j.dest}</div><p className="meta">{j.desc}</p>
+  return(<article className="card"><div className="img"><Art k={j.k}/>
+    <div className="body"><h3>{j.name}</h3><div className="details"><div className="loc"><Pin/>{j.dest}</div><p>{j.desc}</p>
       <div className="pbox"><div className="amt">{money(j.price)} <small>USD / person</small></div><span className="dep"><Cal/>Departures year-round</span></div>
-      <a className="btn btn-dark" href={`#journey-${j.id}`}>View Journey</a></div></article>);
+      <div className="tags"><span>{j.dur}</span><span>{TAG[j.id]}</span></div></div>
+      <a className="btn btn-dark" href={`#journey-${j.id}`}>View Journey</a></div></div></article>);
 }
 export default function Home({onSearch}){
   const [q,setQ]=useState({j:'',date:'',n:2});
